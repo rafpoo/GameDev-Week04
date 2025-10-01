@@ -1,35 +1,36 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class Sc_move3 : MonoBehaviour
 {
-    private float speed = 5f;
-    // Start is called before the first frame update
-    void Start()
-    {
+    [SerializeField] float speed = 7f;
+    [SerializeField] float rotationSpeed = 10f;
 
-    }
-
-    // Update is called once per frame
     void Update()
     {
-        float h = Input.GetAxis("Horizontal");
-        float v = Input.GetAxis("Vertical");
-
-        // perputaran berdasarkan posisi kamera
-        if (h != 0 || v != 0)
+        float updatedSpeed = speed;
+        if (Input.GetKey(KeyCode.LeftShift))
         {
-            Vector3 targetDirection = new Vector3(h, 0f, v);
-            targetDirection = Camera.main.transform.TransformDirection(targetDirection);
-            targetDirection.y = 0.0f;
-
-            Quaternion targetRotation = Quaternion.LookRotation(targetDirection, Vector3.up);
-            transform.rotation = targetRotation;
+            updatedSpeed *= 2;
         }
 
-        // pergerakan berdasarkan posisi kamera
-        transform.position += Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up) * v * speed * Time.deltaTime;
-        transform.position += Vector3.ProjectOnPlane(Camera.main.transform.right, Vector3.up) * h * speed * Time.deltaTime;
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+
+        Vector3 input = new Vector3(h, 0f, v);
+
+        if (input.sqrMagnitude > 0.01f)
+        {
+            // arah relatif kamera
+            Vector3 targetDirection = Camera.main.transform.TransformDirection(input);
+            targetDirection.y = 0f;
+
+            // rotasi smooth
+            Quaternion targetRotation = Quaternion.LookRotation(targetDirection, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+
+            // gerak
+            transform.position += targetDirection.normalized * updatedSpeed * Time.deltaTime;
+        }
     }
 }
